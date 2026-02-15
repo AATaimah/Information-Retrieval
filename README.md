@@ -39,9 +39,13 @@ python3 src/retrieve.py
 ```
 
 ## Evaluate with trec_eval (optional)
-If `trec_eval` is installed:
+Build and run `trec_eval` from the included source folder:
 ```bash
-trec_eval -m map scifact/qrels/test.tsv Results
+cd trec_eval
+make
+cd ..
+awk 'NR>1 {printf "%s 0 %s %s\n", $1, $2, $3}' scifact/qrels/test.tsv > /tmp/scifact_test.qrels
+./trec_eval/trec_eval -m num_q -m map /tmp/scifact_test.qrels Results
 ```
 
 ## Output Format
@@ -92,11 +96,12 @@ Query `3`:
 `3 Q0 19058822 10 0.172698 tfidf_cosine`
 
 ## Evaluation
-- MAP on test queries: `0.216534`
-- Number of test queries evaluated: `300`
+- MAP on judged test queries: `0.4246`
+- Number of judged test queries evaluated (`num_q`): `153`
 - `trec_eval` command:
 ```bash
-trec_eval -m map scifact/qrels/test.tsv Results
+awk 'NR>1 {printf "%s 0 %s %s\n", $1, $2, $3}' scifact/qrels/test.tsv > /tmp/scifact_test.qrels
+./trec_eval/trec_eval -m num_q -m map /tmp/scifact_test.qrels Results
 ```
 
 ## Query-Field Runs Note
