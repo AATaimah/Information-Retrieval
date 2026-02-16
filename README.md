@@ -16,7 +16,6 @@
 - `src/preprocessor.py`: tokenization, filtering, stopword removal, stemming.
 - `src/index.py`: inverted index with TF-IDF weights and document vector lengths.
 - `src/retrieve.py`: query scoring with cosine similarity and ranked retrieval.
-- `scifact/`: dataset files (`corpus.jsonl`, `queries.jsonl`, `qrels/`).
 - `outputs/index/`: prebuilt index files.
 - `Results`: ranked output file for the best run submitted.
 
