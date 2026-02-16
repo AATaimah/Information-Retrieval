@@ -19,6 +19,14 @@
 - `outputs/index/`: prebuilt index files.
 - `Results`: ranked output file for the best run submitted.
 
+## Dataset Note (Submission Policy)
+- The initial text collection (`scifact/corpus.jsonl`) is intentionally excluded from this submission, per assignment instructions.
+- This repository uses prebuilt index files in `outputs/index/`, so retrieval does not require rebuilding from the full corpus.
+- To rerun retrieval/evaluation, place the following files under `scifact/`:
+  - `scifact/queries.jsonl`
+  - `scifact/qrels/train.tsv`
+  - `scifact/qrels/test.tsv`
+
 ## Functionality, Algorithms, Data Structures, and Optimizations
 
 ### Step 1: Preprocessing
@@ -88,7 +96,17 @@ make
 cd ..
 ```
 
-### 3) Run retrieval for required query-field settings
+### 3) Prepare required query/qrels files
+Create this layout (without the initial text collection):
+```bash
+scifact/
+  queries.jsonl
+  qrels/
+    train.tsv
+    test.tsv
+```
+
+### 4) Run retrieval for required query-field settings
 SciFact provides a single query text field (`text`). To satisfy the assignment requirement for query fields, `src/retrieve.py` supports:
 - `title_only`: uses the first 5 raw query tokens as a title proxy.
 - `title_plus_text`: concatenates title proxy + full query text.
@@ -103,16 +121,22 @@ Run B (`title_plus_text`):
 python3 src/retrieve.py --query-mode title_plus_text --title-tokens 5 --output Results_title_plus_text --run-tag tfidf_title_plus_text
 ```
 
-### 4) Convert qrels and evaluate with `trec_eval`
+### 5) Convert qrels and evaluate with `trec_eval`
 ```bash
 awk 'NR>1 {printf "%s 0 %s %s\n", $1, $2, $3}' scifact/qrels/test.tsv > /tmp/scifact_test.qrels
 ./trec_eval/trec_eval -m num_q -m map /tmp/scifact_test.qrels Results_title_only
 ./trec_eval/trec_eval -m num_q -m map /tmp/scifact_test.qrels Results_title_plus_text
 ```
 
-### 5) Keep best run in file named `Results`
+### 6) Keep best run in file named `Results`
 ```bash
 cp Results_title_plus_text Results
+```
+
+## Submission Zip (without initial text collection)
+Use this from repository root:
+```bash
+zip -r Assignment1_submission.zip README.md src outputs Results Results_title_only Results_title_plus_text trec_eval -x "*/.DS_Store" "*/__pycache__/*" "*.pyc" "trec_eval/trec_eval.dSYM/*"
 ```
 
 ## Query-Field Runs and Comparison
