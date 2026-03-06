@@ -1,3 +1,4 @@
+from tqdm import tqdm
 import json
 import math
 from collections import defaultdict, Counter
@@ -92,6 +93,7 @@ def doc_to_string(doc: dict) -> str:
     
     title = doc.get("title", "").strip()
     text = doc.get("text", "").strip()
+    text = text[:1500]
     if title and text:
         return title + ". " + text
     return title or text
@@ -132,7 +134,7 @@ def write_trec_results(out_path: Path, run_tag: str, all_rankings: dict[str, lis
 
 
 def main():
-    root = Path(__file__).resolve().parent
+    root = Path(__file__).resolve().parent.parent
 
     
     index_prefix = root / "outputs" / "index" / "scifact_head_text"
@@ -166,13 +168,13 @@ def main():
     
     bi_model = SentenceTransformer(biencoder_model)
 
-    for qid, qtext in test_queries:
+    for qid, qtext in tqdm(test_queries, desc="Bi-encoder queries"):
         candidates = get_candidates(index, qtext, k=100)
         cand_ids = [doc_id for doc_id, _ in candidates]
         cand_texts = [doc_to_string(docs.get(doc_id, {})) for doc_id in cand_ids]
 
         q_emb = bi_model.encode([qtext], normalize_embeddings=True)[0]
-        d_emb = bi_model.encode(cand_texts, normalize_embeddings=True)
+        d_emb = bi_model.encode(cand_texts, normalize_embeddings=True, batch_size=16, show_progress_bar=False)
         scores = (d_emb @ q_emb).tolist()
 
         reranked = sorted(zip(cand_ids, scores), key=lambda x: (-x[1], x[0]))
@@ -187,13 +189,13 @@ def main():
 
     ce_model = CrossEncoder(crossencoder_model)
 
-    for qid, qtext in test_queries:
+    for qid, qtext in tqdm(test_queries, desc="Cross-encoder queries"):
         candidates = get_candidates(index, qtext, k=100)
         cand_ids = [doc_id for doc_id, _ in candidates]
         cand_texts = [doc_to_string(docs.get(doc_id, {})) for doc_id in cand_ids]
 
         pairs = [[qtext, dt] for dt in cand_texts]
-        scores = ce_model.predict(pairs).tolist()
+        scores = ce_model.predict(pairs, batch_size=16).tolist()
 
         reranked = sorted(zip(cand_ids, scores), key=lambda x: (-x[1], x[0]))
         cross_rankings[qid] = reranked

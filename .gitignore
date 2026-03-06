@@ -1,0 +1,11 @@
+# Dataset (do not commit)
+corpus.jsonl
+queries.jsonl
+test.tsv
+qrels*.txt
+
+# Python / environment
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
