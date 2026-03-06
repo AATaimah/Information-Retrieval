@@ -240,7 +240,10 @@ Example:
 ## First 10 Answers (Queries 1 and 3) — Best Run (`Results`)
 
 Query `1` (top 10):
+## First 10 Answers (Queries 1 and 3) — Best Run (`Results`)
 
+Query `1` (top 10):
+```text
 1 Q0 43385013 1 -6.850762 best_neural
 1 Q0 37437064 2 -7.243060 best_neural
 1 Q0 1065627 3 -8.584124 best_neural
