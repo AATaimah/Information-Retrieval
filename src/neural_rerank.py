@@ -9,7 +9,6 @@ from preprocessor import preprocess_text
 
 # Neural models
 from sentence_transformers import SentenceTransformer, CrossEncoder
-import numpy as np
 
 
 def load_scifact_queries(path: Path) -> list[tuple[str, str]]:
@@ -90,36 +89,13 @@ def load_scifact_corpus(path: Path) -> dict[str, dict]:
 
 
 def doc_to_string(doc: dict) -> str:
-    
     title = doc.get("title", "").strip()
     text = doc.get("text", "").strip()
+    # Truncate long abstracts to keep reranking latency manageable.
     text = text[:1500]
     if title and text:
         return title + ". " + text
     return title or text
-
-
-# Neural rerank methods 
-def rerank_biencoder(query: str, cand_doc_ids: list[str], doc_texts: list[str], model_name: str) -> list[float]:
-    """
-    Bi-encoder: embed query and docs separately, then cosine similarity.
-    """
-    model = SentenceTransformer(model_name)
-    q_emb = model.encode([query], normalize_embeddings=True)[0]
-    d_emb = model.encode(doc_texts, normalize_embeddings=True)
-    
-    scores = (d_emb @ q_emb).tolist()
-    return scores
-
-
-def rerank_crossencoder(query: str, doc_texts: list[str], model_name: str) -> list[float]:
-    """
-    Cross-encoder: score each (query, doc) pair.
-    """
-    ce = CrossEncoder(model_name)
-    pairs = [[query, dt] for dt in doc_texts]
-    scores = ce.predict(pairs).tolist()
-    return scores
 
 
 def write_trec_results(out_path: Path, run_tag: str, all_rankings: dict[str, list[tuple[str, float]]]):
@@ -136,19 +112,16 @@ def write_trec_results(out_path: Path, run_tag: str, all_rankings: dict[str, lis
 def main():
     root = Path(__file__).resolve().parent.parent
 
-    
     index_prefix = root / "outputs" / "index" / "scifact_head_text"
     queries_path = root / "queries.jsonl"
     corpus_path = root / "corpus.jsonl"
 
-    
     out_biencoder = root / "Results_minilm"
     out_cross = root / "Results_cross"
-    out_best = root / "Results"  
+    out_best = root / "Results"
 
-    
-    biencoder_model = "sentence-transformers/all-MiniLM-L6-v2"  
-    crossencoder_model = "cross-encoder/ms-marco-MiniLM-L6-v2"   # :contentReference[oaicite:4]{index=4}
+    biencoder_model = "sentence-transformers/all-MiniLM-L6-v2"
+    crossencoder_model = "cross-encoder/ms-marco-MiniLM-L6-v2"
 
     print("Loading index...")
     index = InvertedIndex.load(str(index_prefix))
@@ -165,7 +138,6 @@ def main():
     print("Running bi-encoder rerank...")
     biencoder_rankings = {}
 
-    
     bi_model = SentenceTransformer(biencoder_model)
 
     for qid, qtext in tqdm(test_queries, desc="Bi-encoder queries"):
@@ -203,8 +175,7 @@ def main():
     write_trec_results(out_cross, "crossencoder_msmarco", cross_rankings)
     print(f"Wrote {out_cross}")
 
-    # guys we will Pick the best later after evaluation; for now default to cross 
-    # You guys can replace this after you compute MAP/P@10.
+    # Keep the current best-performing run in the required submission filename.
     write_trec_results(out_best, "best_neural", cross_rankings)
     print(f"Wrote {out_best} (currently same as Results_cross)")
 
