@@ -23,4 +23,3 @@ Large dataset files are not meant to be committed to the repository. See `A1.md`
 ## Notes
 - `A1.md` documents the TF-IDF retrieval system.
 - `A2.md` documents the neural reranking system built on top of the Assignment 1 pipeline.
-- `Assignment2_Report.md` is the full write-up in submission-report format.
